@@ -6,8 +6,6 @@
 
 #import "NSObject+Utilities.h"
 #import <objc/runtime.h>
-#import <CoreGraphics/CoreGraphics.h>
-#import <UIKit/UIKit.h>
 
 
 #if ! __has_feature(objc_arc)
@@ -15,6 +13,20 @@
 #endif
 
 @implementation NSObject (TC_Utilities)
+
+@dynamic userInfo;
+
+
+- (id)userInfo
+{
+    return objc_getAssociatedObject(self, @selector(userInfo));
+}
+
+- (void)setUserInfo:(id)userInfo
+{
+    objc_setAssociatedObject(self, @selector(userInfo), userInfo, OBJC_ASSOCIATION_RETAIN);
+}
+
 
 + (void)tc_swizzle:(SEL)aSelector
 {

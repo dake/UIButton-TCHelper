@@ -21,7 +21,6 @@ typedef NS_ENUM(NSInteger, TCButtonLayoutStyle) {
 
 @property (nonatomic, assign) UIEdgeInsets alignmentRectInsets;
 @property (nonatomic, assign) CGFloat paddingBetweenTitleAndImage;
-@property (nonatomic, strong) id userInfo;
 
 @property (nonatomic, assign) TCButtonLayoutStyle layoutStyle;
 

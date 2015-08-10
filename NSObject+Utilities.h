@@ -11,6 +11,8 @@ typedef void(^BasicBlockType)();
 
 @interface NSObject (TC_Utilities)
 
+@property (nonatomic, strong) id userInfo;
+
 + (void)tc_swizzle:(SEL)aSelector;
 
 // Return all superclasses of object

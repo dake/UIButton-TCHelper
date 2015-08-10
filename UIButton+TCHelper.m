@@ -24,7 +24,6 @@
 @property (nonatomic, strong) NSMutableDictionary *innerBackgroundColorDic;
 @property (nonatomic, strong) NSMutableDictionary *borderColorDic;
 @property (nonatomic, weak) UIButton *target;
-@property (nonatomic, strong) id userInfo;
 @property (nonatomic, assign) TCButtonLayoutStyle layoutStyle;
 @property (nonatomic, assign) BOOL isFrameObserved;
 @property (nonatomic, assign) BOOL sizeFitWorking; // 阻止sizeToFit 引起的frame递归
@@ -109,17 +108,6 @@ static char const kBtnExtraKey;
     }
     
     return observer;
-}
-
-
-- (id)userInfo
-{
-    return self.btnExtra.userInfo;
-}
-
-- (void)setUserInfo:(id)userInfo
-{
-    self.btnExtra.userInfo = userInfo;
 }
 
 - (void)tc_setImage:(UIImage *)image forState:(UIControlState)state
