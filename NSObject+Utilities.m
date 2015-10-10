@@ -12,6 +12,7 @@
 #error this file is ARC only. Either turn on ARC for the project or use -fobjc-arc flag
 #endif
 
+
 @implementation NSObject (TC_Utilities)
 
 @dynamic userInfo;
@@ -33,8 +34,48 @@
     SEL bSelector = NSSelectorFromString([NSString stringWithFormat:@"tc_%@", NSStringFromSelector(aSelector)]);
     Method m1 = class_getInstanceMethod(self, aSelector);
     Method m2 = class_getInstanceMethod(self, bSelector);
+    const char *type = method_getTypeEncoding(m2);
     if (class_addMethod(self, aSelector, method_getImplementation(m2), method_getTypeEncoding(m2))) {
-        class_replaceMethod(self, bSelector, method_getImplementation(m1), method_getTypeEncoding(m1));
+        if (NULL != m1) {
+            class_replaceMethod(self, bSelector, method_getImplementation(m1), method_getTypeEncoding(m1));
+        }
+        else {
+            char *rtType = method_copyReturnType(m2);
+            NSString *returnType = @(rtType);
+            free(rtType);
+            
+            IMP imp = NULL;
+            if ([returnType isEqualToString:@"v"]) {
+                imp = imp_implementationWithBlock(^(){});
+            }
+            else if ([returnType hasPrefix:@"@"]) {
+                imp = imp_implementationWithBlock(^(){return nil;});
+            }
+            else if ([returnType isEqualToString:@(@encode(CGPoint))]) {
+                imp = imp_implementationWithBlock(^(){return CGPointZero;});
+            }
+            else if ([returnType isEqualToString:@(@encode(CGSize))]) {
+                imp = imp_implementationWithBlock(^(){return CGSizeZero;});
+            }
+            else if ([returnType isEqualToString:@(@encode(CGRect))]) {
+                imp = imp_implementationWithBlock(^(){return CGRectZero;});
+            }
+            else if ([returnType isEqualToString:@(@encode(CGAffineTransform))]) {
+                imp = imp_implementationWithBlock(^(){return CGAffineTransformIdentity;});
+            }
+            else if ([returnType isEqualToString:@(@encode(UIEdgeInsets))]) {
+                imp = imp_implementationWithBlock(^(){return UIEdgeInsetsZero;});
+            }
+            else if ([returnType isEqualToString:@(@encode(NSRange))]) {
+                imp = imp_implementationWithBlock(^(){return NSMakeRange(NSNotFound, 0);});
+            }
+            else {
+                imp = imp_implementationWithBlock(^(){return 0;});
+            }
+            
+            class_replaceMethod(self, bSelector, imp, type);
+            imp_removeBlock(imp);
+        }
     }
     else {
         method_exchangeImplementations(m1, m2);
@@ -49,12 +90,11 @@
     Class theClass = self;
     NSMutableArray *results = [NSMutableArray arrayWithObject:theClass];
     
-    do
-    {
+    do {
         theClass = [theClass superclass];
         [results addObject:theClass];
     }
-    while (![theClass isEqual:NSObject.class]) ;
+    while (![theClass isEqual:NSObject.class]);
     
     return results;
 }
@@ -666,7 +706,7 @@ void _PerformBlockAfterDelay(BasicBlockType block, NSTimeInterval delay)
     
     if ([typeNameString isEqualToString:@":"])
         return @"(SEL)";
-    
+
     if ([typeNameString isEqualToString:@(@encode(CGPoint))])
         return @"(CGPoint)";
     
