@@ -17,7 +17,7 @@
 
 @end
 
-@interface UIButtonExtra : NSObject
+@interface TCButtonExtra : NSObject
 
 @property (nonatomic, assign) UIEdgeInsets alignmentRectInsets;
 @property (nonatomic, assign) CGFloat paddingBetweenTitleAndImage;
@@ -26,11 +26,10 @@
 @property (nonatomic, weak) UIButton *target;
 @property (nonatomic, assign) TCButtonLayoutStyle layoutStyle;
 @property (nonatomic, assign) BOOL isFrameObserved;
-@property (nonatomic, assign) BOOL sizeFitWorking; // 阻止sizeToFit 引起的frame递归
 
 @end
 
-@implementation UIButtonExtra
+@implementation TCButtonExtra
 
 #pragma mark - KVO
 
@@ -41,10 +40,8 @@
             NSNumber *state = @(_target.state);
             self.target.backgroundColor = self.innerBackgroundColorDic[state];
             self.target.layer.borderColor = [(UIColor *)self.borderColorDic[state] CGColor];
-        }
-        else if ([keyPath isEqualToString:@"bounds"] || [keyPath isEqualToString:@"frame"]
-                 || [keyPath isEqualToString:@"imageView.bounds"] || [keyPath isEqualToString:@"imageView.frame"]
-                 || [keyPath isEqualToString:@"titleLabel.bounds"] || [keyPath isEqualToString:@"titleLabel.frame"]) {
+            
+        } else if ([keyPath isEqualToString:@"bounds"] || [keyPath isEqualToString:@"frame"]) {
             CGRect oldFrame = [(NSValue *)change[NSKeyValueChangeOldKey] CGRectValue];
             CGRect newFrame = [(NSValue *)change[NSKeyValueChangeNewKey] CGRectValue];
             
@@ -70,7 +67,7 @@ static char const kBtnExtraKey;
 
 - (void)tc_dealloc
 {
-    UIButtonExtra *observer = objc_getAssociatedObject(self, &kBtnExtraKey);
+    TCButtonExtra *observer = objc_getAssociatedObject(self, &kBtnExtraKey);
     if (nil != observer) {
         if (observer.isFrameObserved) {
             [self removeFrameObserver:observer];
@@ -97,12 +94,12 @@ static char const kBtnExtraKey;
     });
 }
 
-- (UIButtonExtra *)btnExtra
+- (TCButtonExtra *)btnExtra
 {
-    UIButtonExtra *observer = objc_getAssociatedObject(self, &kBtnExtraKey);
+    TCButtonExtra *observer = objc_getAssociatedObject(self, &kBtnExtraKey);
     
     if (nil == observer) {
-        observer = [[UIButtonExtra alloc] init];
+        observer = [[TCButtonExtra alloc] init];
         observer.target = self;
         objc_setAssociatedObject(self, &kBtnExtraKey, observer, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
@@ -114,7 +111,7 @@ static char const kBtnExtraKey;
 {
     UIImage *oldImg = [self imageForState:state];
     [self tc_setImage:image forState:state];
-    if (oldImg != image) {
+    if (oldImg != image && !CGRectIsEmpty(self.frame)) {
         [self updateLayoutStyle];
     }
 }
@@ -123,7 +120,7 @@ static char const kBtnExtraKey;
 {
     NSString *oldTitle = [self titleForState:state];
     [self tc_setTitle:title forState:state];
-    if (![oldTitle isEqualToString:title]) {
+    if (![oldTitle isEqualToString:title] && !CGRectIsEmpty(self.frame)) {
         [self updateLayoutStyle];
     }
 }
@@ -132,7 +129,7 @@ static char const kBtnExtraKey;
 {
     NSAttributedString *oldTitle = [self attributedTitleForState:state];
     [self tc_setAttributedTitle:title forState:state];
-    if (![oldTitle isEqual:title]) {
+    if (![oldTitle isEqual:title] && !CGRectIsEmpty(self.frame)) {
         [self updateLayoutStyle];
     }
 }
@@ -155,8 +152,7 @@ static char const kBtnExtraKey;
         if (nil != color) {
             [titleString addAttribute:NSForegroundColorAttributeName value:color range:NSMakeRange(0, titleString.length)];
         }
-    }
-    else {
+    } else {
         UIColor *color = [self titleColorForState:state];
         if (nil != color) {
             title = [self titleForState:UIControlStateNormal];
@@ -189,8 +185,7 @@ static char const kBtnExtraKey;
         [self setUnderlineAtrributedStringForState:UIControlStateSelected];
         [self setUnderlineAtrributedStringForState:UIControlStateDisabled];
         [self setUnderlineAtrributedStringForState:UIControlStateHighlighted | UIControlStateSelected];
-    }
-    else {
+    } else {
         [self setAttributedTitle:nil forState:UIControlStateNormal];
         [self setAttributedTitle:nil forState:UIControlStateHighlighted];
         [self setAttributedTitle:nil forState:UIControlStateSelected];
@@ -219,25 +214,12 @@ static char const kBtnExtraKey;
 {
     [self addObserver:observer forKeyPath:@"bounds" options:NSKeyValueObservingOptionOld|NSKeyValueObservingOptionNew context:NULL];
     [self addObserver:observer forKeyPath:@"frame" options:NSKeyValueObservingOptionOld|NSKeyValueObservingOptionNew context:NULL];
-    
-//    [self addObserver:observer forKeyPath:@"titleLabel.bounds" options:NSKeyValueObservingOptionOld|NSKeyValueObservingOptionNew context:NULL];
-//    [self addObserver:observer forKeyPath:@"titleLabel.frame" options:NSKeyValueObservingOptionOld|NSKeyValueObservingOptionNew context:NULL];
-    
-    // FIXME: dealloc crash, if any imageView kvo added on iOS8.x with translatesAutoresizingMaskIntoConstraints = NO
-//    [self addObserver:observer forKeyPath:@"imageView.bounds" options:NSKeyValueObservingOptionOld|NSKeyValueObservingOptionNew context:NULL];
-//    [self addObserver:observer forKeyPath:@"imageView.frame" options:NSKeyValueObservingOptionOld|NSKeyValueObservingOptionNew context:NULL];
 }
 
 - (void)removeFrameObserver:(id)observer
 {
     [self removeObserver:observer forKeyPath:@"bounds" context:NULL];
     [self removeObserver:observer forKeyPath:@"frame" context:NULL];
-    
-//    [self removeObserver:observer forKeyPath:@"titleLabel.bounds" context:NULL];
-//    [self removeObserver:observer forKeyPath:@"titleLabel.frame" context:NULL];
-    
-//    [self removeObserver:observer forKeyPath:@"imageView.bounds"];
-//    [self removeObserver:observer forKeyPath:@"imageView.frame"];
 }
 
 - (TCButtonLayoutStyle)layoutStyle
@@ -247,22 +229,23 @@ static char const kBtnExtraKey;
 
 - (void)setLayoutStyle:(TCButtonLayoutStyle)layoutStyle
 {
-    UIButtonExtra *btnExtra = self.btnExtra;
+    TCButtonExtra *btnExtra = self.btnExtra;
     if (btnExtra.layoutStyle == layoutStyle) {
         return;
     }
     
     btnExtra.layoutStyle = layoutStyle;
     
-    [self updateLayoutStyle];
+    if (!CGRectIsEmpty(self.frame)) {
+        [self updateLayoutStyle];
+    }
     
     if (layoutStyle != kTCButtonLayoutStyleDefault) {
         if (!btnExtra.isFrameObserved) {
             [self addFrameObserver:btnExtra];
             btnExtra.isFrameObserved = YES;
         }
-    }
-    else {
+    } else {
         if (btnExtra.isFrameObserved) {
             [self removeFrameObserver:btnExtra];
             btnExtra.isFrameObserved = NO;
@@ -284,12 +267,6 @@ static char const kBtnExtraKey;
 
 - (void)updateLayoutStyle
 {
-    if (self.btnExtra.sizeFitWorking) {
-        return;
-    }
-    
-    self.btnExtra.sizeFitWorking = YES;
-    
     switch (self.layoutStyle) {
         case kTCButtonLayoutStyleImageLeftTitleRight:
             [self imageAndTitleToFitHorizonal];
@@ -310,13 +287,8 @@ static char const kBtnExtraKey;
         default:
             break;
     }
-    
-    self.btnExtra.sizeFitWorking = NO;
 }
 
-/**
- @brief	图片上，文字下 竖排，水平居中
- */
 - (void)imageAndTitleToFitVerticalUp
 {
     if (nil != self.titleLabel && nil != self.imageView) {
@@ -339,9 +311,6 @@ static char const kBtnExtraKey;
     }
 }
 
-/**
- @brief	图片下，文字上 竖排，水平居中
- */
 - (void)imageAndTitleToFitVerticalDown
 {
     if (nil != self.titleLabel && nil != self.imageView) {
@@ -364,14 +333,10 @@ static char const kBtnExtraKey;
     }
 }
 
-/**
- @brief	图片右，文字左 横排
- */
 - (void)imageAndTitleToFitHorizonalReverse
 {
     if (nil != self.titleLabel && nil != self.imageView) {
         // fix bug on iOS7
-        [self sizeToFit];
         self.titleEdgeInsets = UIEdgeInsetsZero;
         self.imageEdgeInsets = UIEdgeInsetsZero;
         [self.imageView sizeToFit];
@@ -388,7 +353,6 @@ static char const kBtnExtraKey;
 {
     if (nil != self.titleLabel && nil != self.imageView) {
         // fix bug on iOS7
-        [self sizeToFit];
         self.titleEdgeInsets = UIEdgeInsetsZero;
         self.imageEdgeInsets = UIEdgeInsetsZero;
         [self.imageView sizeToFit];
@@ -427,7 +391,7 @@ static char const kBtnExtraKey;
 
 - (NSMutableDictionary *)innerBackgroundColorDic
 {
-    UIButtonExtra *btnExtra = self.btnExtra;
+    TCButtonExtra *btnExtra = self.btnExtra;
     if (nil == btnExtra.innerBackgroundColorDic) {
         btnExtra.innerBackgroundColorDic = [NSMutableDictionary dictionary];
         if (nil == btnExtra.borderColorDic) {
@@ -440,7 +404,7 @@ static char const kBtnExtraKey;
 
 - (NSMutableDictionary *)borderColorDic
 {
-    UIButtonExtra *btnExtra = self.btnExtra;
+    TCButtonExtra *btnExtra = self.btnExtra;
     if (nil == btnExtra.borderColorDic) {
         btnExtra.borderColorDic = [NSMutableDictionary dictionary];
         if (nil == btnExtra.innerBackgroundColorDic) {
