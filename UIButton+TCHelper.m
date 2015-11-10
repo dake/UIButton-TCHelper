@@ -314,73 +314,65 @@ static char const kBtnExtraKey;
 - (void)imageAndTitleToFitVerticalUp
 {
     if (nil != self.titleLabel && nil != self.imageView) {
-        [self noFrameKVOPerform:^{
-            
-            self.titleEdgeInsets = UIEdgeInsetsZero;
-            self.imageEdgeInsets = UIEdgeInsetsZero;
-            self.contentEdgeInsets = UIEdgeInsetsZero;
-            
-            self.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
-            self.titleLabel.textAlignment = NSTextAlignmentCenter;
-            
-            // !!!: key to compatible with iOS8
-            [self sizeToFit];
-            [self.titleLabel sizeToFit];
-            [self.imageView sizeToFit];
         
-            CGSize titleSize = self.titleLabel.frame.size;
-            CGSize imageSize = self.imageView.frame.size;
-            CGSize size = self.bounds.size;
-            
-            
-            CGFloat pad = self.paddingBetweenTitleAndImage * 0.5f;
-            
-
-            CGFloat r = (titleSize.height + imageSize.height) * 0.5 - MIN(titleSize.height, imageSize.height);
-            CGFloat border = self.layer.borderWidth;
-            self.imageEdgeInsets = UIEdgeInsetsMake(-imageSize.height * 0.5 - pad + border + r, (size.width - imageSize.width) * 0.5, imageSize.height * 0.5 + pad - border - r, -titleSize.width);
-            self.titleEdgeInsets = UIEdgeInsetsMake(titleSize.height * 0.5 + pad + border + r, (size.width - titleSize.width) * 0.5 - imageSize.width, -titleSize.height * 0.5 - pad - border - r, 0);
-            
-
-//            CGFloat expand = (titleSize.height + imageSize.height - size.height) * 0.5 + pad + border;
-//            CGRect bounds = self.bounds;
-//            bounds.size.height += expand * 2;
-//            self.bounds = bounds;
-        }];
+        self.titleEdgeInsets = UIEdgeInsetsZero;
+        self.imageEdgeInsets = UIEdgeInsetsZero;
+        
+        self.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+        self.titleLabel.textAlignment = NSTextAlignmentCenter;
+        
+        [self.imageView sizeToFit];
+        CGSize imageSize = self.imageView.frame.size;
+        
+        [self.titleLabel sizeToFit];
+        self.titleEdgeInsets = UIEdgeInsetsMake(0, -imageSize.width, 0, 0);
+        CGSize titleSize = self.titleLabel.frame.size;
+        
+        CGSize size = self.bounds.size;
+        CGFloat pad = self.paddingBetweenTitleAndImage * 0.5f;
+        CGFloat r = (titleSize.height + imageSize.height) * 0.5 - MIN(titleSize.height, imageSize.height);
+        CGFloat border = self.layer.borderWidth;
+        
+        self.imageEdgeInsets = UIEdgeInsetsMake(-imageSize.height * 0.5 - pad + border + r, (size.width - imageSize.width) * 0.5, imageSize.height * 0.5 + pad - border - r, -(size.width - imageSize.width) * 0.5);
+        self.titleEdgeInsets = UIEdgeInsetsMake(titleSize.height * 0.5 + pad + border + r, (size.width - titleSize.width) * 0.5 - imageSize.width, -titleSize.height * 0.5 - pad - border - r, 0);
+        
+        
+//        self.backgroundColor = [UIColor yellowColor];
+//        self.titleLabel.backgroundColor = [UIColor redColor];
+        //            CGFloat expand = (titleSize.height + imageSize.height - size.height) * 0.5 + pad + border;
+        //            CGRect bounds = self.bounds;
+        //            bounds.size.height += expand * 2;
+        //            self.bounds = bounds;
     }
 }
 
 - (void)imageAndTitleToFitVerticalDown
 {
     if (nil != self.titleLabel && nil != self.imageView) {
-        self.titleLabel.backgroundColor = [UIColor redColor];
-        self.backgroundColor = [UIColor yellowColor];
-        [self noFrameKVOPerform:^{
-            self.titleEdgeInsets = UIEdgeInsetsZero;
-            self.imageEdgeInsets = UIEdgeInsetsZero;
-            self.contentEdgeInsets = UIEdgeInsetsZero;
-            
-            self.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
-            self.titleLabel.textAlignment = NSTextAlignmentCenter;
-            
-            CGSize size = self.bounds.size;
-            CGSize titleSize = self.titleLabel.frame.size;
-            CGSize imageSize = self.imageView.frame.size;
-            CGFloat pad = self.paddingBetweenTitleAndImage * 0.5f;
-            
-            // !!!: key to compatible with iOS8
-            [self.titleLabel sizeToFit];
-            [self.imageView sizeToFit];
-            
-            CGFloat r = (titleSize.height + imageSize.height) * 0.5 - MIN(titleSize.height, imageSize.height);
-
-            self.imageEdgeInsets = UIEdgeInsetsMake(imageSize.height * 0.5 + pad - r, (size.width - imageSize.width) * 0.5, -imageSize.height * 0.5 - pad + r, -titleSize.width);
-            self.titleEdgeInsets = UIEdgeInsetsMake(-titleSize.height * 0.5 - pad - r, (size.width - titleSize.width) * 0.5 - imageSize.width, titleSize.height * 0.5 + pad + r, 0);
-
-//            CGFloat border = self.layer.borderWidth;
-//            CGFloat expand = (self.titleLabel.frame.size.height + self.imageView.frame.size.height - size.height) * 0.5 + pad + border;
-//            self.contentEdgeInsets = UIEdgeInsetsMake(expand, 0, expand, 0);
-        }];
+        
+        self.titleEdgeInsets = UIEdgeInsetsZero;
+        self.imageEdgeInsets = UIEdgeInsetsZero;
+        
+        self.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+        self.titleLabel.textAlignment = NSTextAlignmentCenter;
+        
+        [self.imageView sizeToFit];
+        CGSize imageSize = self.imageView.frame.size;
+        
+        [self.titleLabel sizeToFit];
+        self.titleEdgeInsets = UIEdgeInsetsMake(0, -imageSize.width, 0, 0);
+        CGSize titleSize = self.titleLabel.frame.size;
+        
+        CGSize size = self.bounds.size;
+        CGFloat pad = self.paddingBetweenTitleAndImage * 0.5f;
+        CGFloat r = (titleSize.height + imageSize.height) * 0.5 - MIN(titleSize.height, imageSize.height);
+        
+        self.imageEdgeInsets = UIEdgeInsetsMake(imageSize.height * 0.5 + pad - r, (size.width - imageSize.width) * 0.5, -imageSize.height * 0.5 - pad + r, -titleSize.width);
+        self.titleEdgeInsets = UIEdgeInsetsMake(-titleSize.height * 0.5 - pad - r, (size.width - titleSize.width) * 0.5 - imageSize.width, titleSize.height * 0.5 + pad + r, 0);
+        
+        //            CGFloat border = self.layer.borderWidth;
+        //            CGFloat expand = (self.titleLabel.frame.size.height + self.imageView.frame.size.height - size.height) * 0.5 + pad + border;
+        //            self.contentEdgeInsets = UIEdgeInsetsMake(expand, 0, expand, 0);
     }
 }
 
@@ -427,11 +419,11 @@ static char const kBtnExtraKey;
 
 - (void)resetImageAndTitleEdges
 {
-    [self noFrameKVOPerform:^{
-        self.titleEdgeInsets = UIEdgeInsetsZero;
-        self.imageEdgeInsets = UIEdgeInsetsZero;
-        self.contentEdgeInsets = UIEdgeInsetsZero;
-    }];
+    self.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+    self.titleLabel.textAlignment = NSTextAlignmentCenter;
+    self.titleEdgeInsets = UIEdgeInsetsZero;
+    self.imageEdgeInsets = UIEdgeInsetsZero;
+    self.contentEdgeInsets = UIEdgeInsetsZero;
 }
 
 
