@@ -264,6 +264,16 @@ static char const kBtnExtraKey;
     self.btnExtra.paddingBetweenTitleAndImage = paddingBetweenTitleAndImage;
 }
 
+- (void(^)(CGSize layoutSize))layoutSizeNeedChangeBlock
+{
+    return (void(^)(CGSize layoutSize))objc_getAssociatedObject(self, @selector(setLayoutSizeNeedChange:));
+}
+
+- (void)setLayoutSizeNeedChange:(void(^)(CGSize layoutSize))block
+{
+    objc_setAssociatedObject(self, _cmd, block, OBJC_ASSOCIATION_COPY_NONATOMIC);
+}
+
 
 - (void)updateLayoutStyle
 {
@@ -336,6 +346,13 @@ static char const kBtnExtraKey;
         self.imageEdgeInsets = UIEdgeInsetsMake(-imageSize.height * 0.5 - pad + border + r, (size.width - imageSize.width) * 0.5, imageSize.height * 0.5 + pad - border - r, -(size.width - imageSize.width) * 0.5);
         self.titleEdgeInsets = UIEdgeInsetsMake(titleSize.height * 0.5 + pad + border + r, (size.width - titleSize.width) * 0.5 - imageSize.width, -titleSize.height * 0.5 - pad - border - r, 0);
         
+        CGSize dstSize = CGSizeMake(MAX(imageSize.width, titleSize.width) + border * 2, imageSize.height + titleSize.height + self.paddingBetweenTitleAndImage + border * 2);
+        if (!CGSizeEqualToSize(size, dstSize)) {
+            void(^block)(CGSize layoutSize) = self.layoutSizeNeedChangeBlock;
+            if (nil != block) {
+                block(dstSize);
+            }
+        }
         
 //        self.backgroundColor = [UIColor yellowColor];
 //        self.titleLabel.backgroundColor = [UIColor redColor];
@@ -370,6 +387,15 @@ static char const kBtnExtraKey;
         self.imageEdgeInsets = UIEdgeInsetsMake(imageSize.height * 0.5 + pad - r, (size.width - imageSize.width) * 0.5, -imageSize.height * 0.5 - pad + r, -titleSize.width);
         self.titleEdgeInsets = UIEdgeInsetsMake(-titleSize.height * 0.5 - pad - r, (size.width - titleSize.width) * 0.5 - imageSize.width, titleSize.height * 0.5 + pad + r, 0);
         
+        CGFloat border = self.layer.borderWidth;
+        CGSize dstSize = CGSizeMake(MAX(imageSize.width, titleSize.width) + border * 2, imageSize.height + titleSize.height + self.paddingBetweenTitleAndImage + border * 2);
+        if (!CGSizeEqualToSize(size, dstSize)) {
+            void(^block)(CGSize layoutSize) = self.layoutSizeNeedChangeBlock;
+            if (nil != block) {
+                block(dstSize);
+            }
+        }
+        
         //            CGFloat border = self.layer.borderWidth;
         //            CGFloat expand = (self.titleLabel.frame.size.height + self.imageView.frame.size.height - size.height) * 0.5 + pad + border;
         //            self.contentEdgeInsets = UIEdgeInsetsMake(expand, 0, expand, 0);
@@ -385,13 +411,25 @@ static char const kBtnExtraKey;
         [self.titleLabel sizeToFit];
         
         CGSize imageSize = self.imageView.frame.size;
-        self.titleEdgeInsets = UIEdgeInsetsMake(0, -imageSize.width, 0, imageSize.width);
         CGSize titleSize = self.titleLabel.frame.size;
-        self.imageEdgeInsets = UIEdgeInsetsMake(0, titleSize.width + self.paddingBetweenTitleAndImage, 0, -titleSize.width - self.paddingBetweenTitleAndImage);
+        CGFloat pad = self.paddingBetweenTitleAndImage * 0.5;
+        
+        self.titleEdgeInsets = UIEdgeInsetsMake(0, -imageSize.width - pad, 0, imageSize.width + pad);
+        self.imageEdgeInsets = UIEdgeInsetsMake(0, titleSize.width + pad, 0, -titleSize.width - pad);
         
         [self noFrameKVOPerform:^{
-            CGFloat expand = self.paddingBetweenTitleAndImage * 0.5 + self.layer.borderWidth;
-            self.contentEdgeInsets = UIEdgeInsetsMake(0, expand, 0, expand);
+            CGFloat expand = pad + self.layer.borderWidth;
+            CGFloat width = expand * 2 + imageSize.width + titleSize.width;
+            CGSize size = self.frame.size;
+            if (width != size.width) {
+                void(^block)(CGSize layoutSize) = self.layoutSizeNeedChangeBlock;
+                if (nil != block) {
+                    size.width = width;
+                    block(size);
+                } else {
+                    self.contentEdgeInsets = UIEdgeInsetsMake(0, expand, 0, expand);
+                }
+            }
         }];
     }
 }
@@ -412,7 +450,19 @@ static char const kBtnExtraKey;
       
         [self noFrameKVOPerform:^{
             CGFloat expand = pad + border;
-            self.contentEdgeInsets = UIEdgeInsetsMake(0, expand, 0, expand);
+            CGSize imageSize = self.imageView.frame.size;
+            CGSize titleSize = self.titleLabel.frame.size;
+            CGFloat width = expand * 2 + imageSize.width + titleSize.width;
+            CGSize size = self.frame.size;
+            if (width != size.width) {
+                void(^block)(CGSize layoutSize) = self.layoutSizeNeedChangeBlock;
+                if (nil != block) {
+                    size.width = width;
+                    block(size);
+                } else {
+                    self.contentEdgeInsets = UIEdgeInsetsMake(0, expand, 0, expand);
+                }
+            }
         }];
     }
 }

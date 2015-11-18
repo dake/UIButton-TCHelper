@@ -44,6 +44,8 @@ typedef NS_ENUM(NSInteger, TCButtonLayoutStyle) {
 - (void)resetImageAndTitleEdges;
 - (void)updateLayoutStyle;
 
+- (void)setLayoutSizeNeedChange:(void(^)(CGSize layoutSize))block;
+
 
 - (UIColor *)backgroundColorForState:(UIControlState)state;
 - (void)setBackgroundColor:(UIColor *)color forState:(UIControlState)state;
