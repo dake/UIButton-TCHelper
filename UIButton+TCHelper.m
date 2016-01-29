@@ -3,12 +3,11 @@
 //  TCKit
 //
 //  Created by dake on 15/1/24.
-//  Copyright (c) 2015年 Dake. All rights reserved.
+//  Copyright (c) 2015年 dake. All rights reserved.
 //
 
 #import "UIButton+TCHelper.h"
 #import <objc/runtime.h>
-#import "NSObject+Utilities.h"
 
 
 @interface UIButton (TCLayoutStyle)
@@ -578,6 +577,64 @@ static char const kBtnExtraKey;
     }
 }
 
+
+#ifndef __TCKit__
+#pragma mark - helper
+
++ (void)tc_swizzle:(SEL)aSelector
+{
+    SEL bSelector = NSSelectorFromString([NSString stringWithFormat:@"tc_%@", NSStringFromSelector(aSelector)]);
+    Method m1 = class_getInstanceMethod(self, aSelector);
+    Method m2 = NULL;
+    if (NULL == m1) {
+        m1 = class_getClassMethod(self, aSelector);
+        m2 = class_getClassMethod(self, bSelector);
+    } else {
+        m2 = class_getInstanceMethod(self, bSelector);
+    }
+    
+    const char *type = method_getTypeEncoding(m2);
+    if (class_addMethod(self, aSelector, method_getImplementation(m2), method_getTypeEncoding(m2))) {
+        if (NULL != m1) {
+            class_replaceMethod(self, bSelector, method_getImplementation(m1), method_getTypeEncoding(m1));
+        } else {
+            char *rtType = method_copyReturnType(m2);
+            NSString *returnType = nil;
+            if (NULL != rtType) {
+                returnType = @(rtType);
+                free(rtType);
+            }
+            
+            IMP imp = NULL;
+            if ([returnType isEqualToString:@"v"]) {
+                imp = imp_implementationWithBlock(^{});
+            } else if ([returnType hasPrefix:@"@"]) {
+                imp = imp_implementationWithBlock(^{return nil;});
+            } else if ([returnType isEqualToString:@(@encode(CGPoint))]) {
+                imp = imp_implementationWithBlock(^{return CGPointZero;});
+            } else if ([returnType isEqualToString:@(@encode(CGSize))]) {
+                imp = imp_implementationWithBlock(^{return CGSizeZero;});
+            } else if ([returnType isEqualToString:@(@encode(CGRect))]) {
+                imp = imp_implementationWithBlock(^{return CGRectZero;});
+            } else if ([returnType isEqualToString:@(@encode(CGAffineTransform))]) {
+                imp = imp_implementationWithBlock(^{return CGAffineTransformIdentity;});
+            } else if ([returnType isEqualToString:@(@encode(UIEdgeInsets))]) {
+                imp = imp_implementationWithBlock(^{return UIEdgeInsetsZero;});
+            } else if ([returnType isEqualToString:@(@encode(NSRange))]) {
+                imp = imp_implementationWithBlock(^{return NSMakeRange(NSNotFound, 0);});
+            } else {
+                imp = imp_implementationWithBlock(^{return 0;});
+            }
+            
+            class_replaceMethod(self, bSelector, imp, type);
+            imp_removeBlock(imp);
+        }
+    } else {
+        method_exchangeImplementations(m1, m2);
+    }
+}
+
+#endif
 
 
 @end
